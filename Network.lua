@@ -1,29 +1,34 @@
 --!strict
 
-export type NetworkRemoteType = "Callable" | "Invokable"
-type Remote = RemoteEvent | RemoteFunction
+export type RemoteType = "Callable" | "Invokable" | "UnreliableCallable"
+
+type Remote = RemoteEvent | RemoteFunction | UnreliableRemoteEvent
+
+local RemoteTypeClasses: {
+	[RemoteType]: string
+} = table.freeze {
+	["Callable"] = "RemoteEvent",
+	["Invokable"] = "RemoteFunction",
+	["UnreliableCallable"] = "UnreliableRemoteEvent"
+}
 
 type Network = {
 	["Remotes"]: {
 		[string]: Remote
 	},
-	["Reserve"]: (Network, string, NetworkRemoteType) -> Remote,
-	["Create"]: (Network, string, NetworkRemoteType) -> Remote,
+	["Reserve"]: (Network, string, RemoteType) -> Remote,
+	["Create"]: (Network, string, RemoteType) -> Remote,
 	["Destroy"]: (Network, string) -> boolean
 }
 
-local Network: Network = {
+return table.freeze {
+	
 	["Remotes"] = {},
 
-	["Reserve"] = function(self: Network, name: string, remoteType: NetworkRemoteType): Remote
+	["Reserve"] = function(self: Network, name: string, remoteType: RemoteType): Remote
 		local existingRemote: Remote = self.Remotes[name]
 		if existingRemote then
-			if remoteType == "Callable" then
-				assert(typeof(existingRemote) == "RemoteFunction", "A callable remote with that name is already in use")
-			else
-				assert(typeof(existingRemote) == "RemoteEvent", "An invokable remote with that name is already in use")
-			end
-			return existingRemote
+			assert(existingRemote:IsA(RemoteTypeClasses[remoteType]), "A remote of a different type with that name is already in use")
 		end
 
 		local remoteInstance: Remote = self:Create(name, remoteType)
@@ -31,22 +36,19 @@ local Network: Network = {
 		return remoteInstance
 	end,
 
-	["Create"] = function(self: Network,name: string, remoteType: NetworkRemoteType): Remote
-		local remoteInstance: Instance = Instance.new(if remoteType == "Callable" then "RemoteEvent" else "RemoteFunction")
+	["Create"] = function(self: Network, name: string, remoteType: RemoteType): Remote
+		local remoteInstance: Instance = Instance.new(RemoteTypeClasses[remoteType])
 		remoteInstance.Name = name
 		return remoteInstance :: Remote
 	end,
 
-	["Destroy"] = function(self: Network,name: string): boolean
+	["Destroy"] = function(self: Network, name: string): boolean
 		local existingRemote: Remote = self.Remotes[name]
 		if not existingRemote then
 			return false
 		end
 		existingRemote:Destroy()
 		return true
-	end
-}
-
-return setmetatable(Network, {
-	__call = Network.Reserve
-})
+	end,
+	
+} :: Network
