@@ -16,19 +16,18 @@ Simply add the module to your game, run and store it (eg. `local Network = requi
 - A string of either:
   - "Callable"
   - "Invokable"
+  - "UnreliableCallable"
 
 ---
 
 ## Usage
 
-There are currently five supported methods of interacting with **network-lua**:
+There are currently four supported methods of interacting with **network-lua**:
 
-1. `Network("name", RemoteType)` (alias for `Network:Reserve(...)`)
+1. `Network.Remotes` (a table `[string]: RemoteEvent | RemoteFunction`) of existing remotes
 
-2. `Network.Remotes` (a table `[string]: RemoteEvent | RemoteFunction`) of existing remotes
+2. `Network:Reserve("name", RemoteType)` (returns an existing remote or calls `Network:Create(...)` if one doesn't exist)
 
-3. `Network:Reserve("name", RemoteType)` (returns an existing remote or calls `Network:Create(...)` if one doesn't exist)
+3. `Network:Create("name", RemoteType)`
 
-4. `Network:Create("name", RemoteType)`
-
-5. `Network:Destroy("name")`
+4. `Network:Destroy("name")`
